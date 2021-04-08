@@ -1,0 +1,18 @@
+
+note over browser:
+user fill the form and press the send button
+end note
+
+browser->server: HTTP POST https://studies.cs.helsinki.fi/exampleapp/new_note
+
+note over server:
+server add the note to the storage
+end note
+
+server->browser: HTTP STATUS CODE 302 URL REDIRECT
+
+
+note over browser:
+browser reload the page 
+end note
+

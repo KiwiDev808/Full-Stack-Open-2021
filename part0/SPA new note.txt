@@ -1,0 +1,21 @@
+
+note over browser:
+user fill the form and press the send button
+the form prevent the default reloading of the page
+with a event handler
+end note
+
+note over browser:
+the note is appended to the list and the input form is cleared
+browser send JSON with note to ther server
+end note
+
+browser->server: HTTP POST https://studies.cs.helsinki.fi/exampleapp/new_note_spa
+
+note over server:
+server add the note to the storage
+end note
+
+server->browser: HTTP STATUS CODE 201 Created
+
+
