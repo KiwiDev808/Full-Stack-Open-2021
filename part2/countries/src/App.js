@@ -19,8 +19,10 @@ function App() {
   };
 
   const showCountry = () => {
+    const lowCaseSearch = search.toLowerCase();
+    
     const filteredCountries = countries.filter((country) =>
-      country.name.toLowerCase().includes(search.toLowerCase())
+      country.name.toLowerCase().includes(lowCaseSearch)
     );
 
     const length = filteredCountries.length;
