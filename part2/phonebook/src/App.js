@@ -1,19 +1,28 @@
-import React, { useState } from "react";
-import Filter from './components/Filter'
-import PersonForm from './components/PersonForm'
-import Persons from './components/Persons'
+import React, { useState, useEffect } from 'react';
+import Filter from './components/Filter';
+import PersonForm from './components/PersonForm';
+import Persons from './components/Persons';
+import phoneBookService from './services/phonebook';
+import Notification from './components/Notification';
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: "Arto Hellas", number: "040-123456" },
-    { name: "Ada Lovelace", number: "39-44-5323523" },
-    { name: "Dan Abramov", number: "12-43-234345" },
-    { name: "Mary Poppendieck", number: "39-23-6423122" },
-  ]);
+  const [persons, setPersons] = useState([]);
+  const [newName, setNewName] = useState('');
+  const [newNumber, setNewNumber] = useState('');
+  const [search, setSearch] = useState('');
+  const [message, setMessage] = useState(null);
+  const [messageType, setMessageType] = useState('');
 
-  const [newName, setNewName] = useState("");
-  const [newNumber, setNewNumber] = useState("");
-  const [search, setSearch] = useState("");
+  useEffect(() => {
+    phoneBookService
+      .getAll()
+      .then((initialPersons) => {
+        setPersons(initialPersons);
+      })
+      .catch((err) => {
+        alert('The server is offline');
+      });
+  }, []);
 
   const nameIsAdded = () => {
     if (persons.some((person) => person.name === newName)) {
@@ -22,19 +31,82 @@ const App = () => {
     return false;
   };
 
+  const successMessage = (msg) => {
+    setMessageType('success');
+    setMessage(msg);
+    setTimeout(() => {
+      setMessage(null);
+    }, 3000);
+  };
+
+  const errorMessage = (msg) => {
+    setMessageType('error');
+    setMessage(msg);
+    setTimeout(() => {
+      setMessage(null);
+    }, 3000);
+  };
+
+  const resetForms = () => {
+    setNewName('');
+    setNewNumber('');
+  };
+
   const addNumber = (e) => {
     e.preventDefault();
+
     if (nameIsAdded()) {
-      alert(`${newName} is already added to the phonebook`);
+      if (
+        window.confirm(
+          `${newName} is already on the phone book, replace the old number with a new one?`
+        )
+      ) {
+        const { id } = persons.find((p) => p.name === newName);
+        const changedPerson = { name: newName, number: newNumber, id };
+
+        phoneBookService
+          .updatePerson(id, changedPerson)
+          .then((returnedPerson) => {
+            setPersons(
+              persons.map((person) =>
+                person.id === id ? returnedPerson : person
+              )
+            );
+            successMessage(`Changed ${newName}`);
+          })
+          .catch((err) => {
+            errorMessage(
+              `Information of ${newName} has already been removed from the server`
+            );
+            setPersons(
+              persons.filter((person) => {
+                return person.id !== id;
+              })
+            );
+          });
+        resetForms();
+      }
+    } else {
+      const newContact = {
+        name: newName,
+        number: newNumber,
+      };
+
+      phoneBookService.create(newContact).then((returnedContact) => {
+        setPersons(persons.concat(returnedContact));
+        successMessage(`Added ${newName}`);
+        resetForms();
+      });
       return;
     }
+  };
 
-    const newContact = {
-      name: newName,
-      number: newNumber,
-    };
-    setPersons(persons.concat(newContact));
-    setNewName("");
+  const deleteNumber = (id, name) => {
+    if (window.confirm(`Delete ${name} ?`))
+      phoneBookService.deletePerson(id).then((response) => {
+        const newPhoneBook = persons.filter((person) => person.id !== id);
+        setPersons(newPhoneBook);
+      });
   };
 
   const handleNameChange = (e) => {
@@ -55,11 +127,12 @@ const App = () => {
 
   return (
     <div>
-      <h2>Phonebook</h2>
-      <Filter search={search} onChange={handleSearchChange}/>
+      <h2>Phone book</h2>
+      <Notification type={messageType} message={message} />
+      <Filter search={search} onChange={handleSearchChange} />
 
       <h2>add a new</h2>
-      <PersonForm 
+      <PersonForm
         onSubmit={addNumber}
         nameValue={newName}
         onChangeName={handleNameChange}
@@ -68,7 +141,7 @@ const App = () => {
       />
 
       <h2>Numbers</h2>
-      <Persons contactList={contactList}/>
+      <Persons contactList={contactList} onClick={deleteNumber} />
     </div>
   );
 };

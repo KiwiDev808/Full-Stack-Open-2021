@@ -1,0 +1,43 @@
+#!/usr/bin/bash
+
+echo What would you like to name your app?
+
+read appname
+
+if [ -d "$appname" ]; then
+    echo "$appname exists"
+else
+    npx create-react-app "$appname"
+fi
+
+cd "$appname"
+
+npm install axios
+npm install json-server --save-dev
+
+cd src
+rm index.css App.css logo.svg App.test.js setupTests.js serviceWorker.js reportWebVitals.js
+mkdir components
+
+echo "import React from 'react';
+
+function App() {
+  return (
+    <div className='App'>
+    </div>
+  );
+}
+export default App;
+" > App.js
+
+echo "import ReactDOM from 'react-dom';
+import App from './App.js';
+
+ReactDOM.render(
+  <App />,
+  document.getElementById('root')
+);
+" > index.js
+
+npm start
+
