@@ -74,15 +74,19 @@ const App = () => {
             );
             successMessage(`Changed ${newName}`);
           })
-          .catch((err) => {
-            errorMessage(
-              `Information of ${newName} has already been removed from the server`
-            );
-            setPersons(
-              persons.filter((person) => {
-                return person.id !== id;
-              })
-            );
+          .catch((error) => {
+            if (error.response.status === 404) {
+              errorMessage(
+                `Information of ${newName} has already been removed from the server`
+              );
+              setPersons(
+                persons.filter((person) => {
+                  return person.id !== id;
+                })
+              );
+            } else {
+              errorMessage(error.response.data.message);
+            }
           });
         resetForms();
       }
@@ -92,11 +96,16 @@ const App = () => {
         number: newNumber,
       };
 
-      phoneBookService.create(newContact).then((returnedContact) => {
-        setPersons(persons.concat(returnedContact));
-        successMessage(`Added ${newName}`);
-        resetForms();
-      });
+      phoneBookService
+        .create(newContact)
+        .then((returnedContact) => {
+          setPersons(persons.concat(returnedContact));
+          successMessage(`Added ${newName}`);
+          resetForms();
+        })
+        .catch((error) => {
+          errorMessage(error.response.data.message);
+        });
       return;
     }
   };
